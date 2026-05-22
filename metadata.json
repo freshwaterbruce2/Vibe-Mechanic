@@ -1,6 +1,6 @@
 {
-  "name": "Pocket Mechanic",
-  "description": "An AI-powered automotive assistant for diagnosing car issues and identifying parts using computer vision.",
+  "name": "Vibe Mechanics",
+  "description": "A high-fidelity AI-powered automotive assistant for diagnosing mechanical issues, checking fluid specs, and customizing PWA installer badges.",
   "requestFramePermissions": [
     "camera"
   ],

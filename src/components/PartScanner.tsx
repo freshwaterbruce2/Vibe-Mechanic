@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Vehicle } from '../App';
-import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, PlayCircle, ExternalLink, Save, Check, ShoppingCart } from 'lucide-react';
+import { Camera, Image as ImageIcon, Loader2, UploadCloud, CheckCircle2, PlayCircle, ExternalLink, Save, Check, ShoppingCart, Zap, ZapOff, X, Video } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import { saveHistory } from '../lib/history';
@@ -12,6 +12,126 @@ export default function PartScanner({ vehicle }: { vehicle: Vehicle }) {
   const [result, setResult] = useState<any | null>(null);
   const [queries, setQueries] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
+
+  // Live Camera & Flash States
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [flashMode, setFlashMode] = useState<'on' | 'off' | 'auto'>('off');
+  const [hasTorch, setHasTorch] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  const startCamera = async () => {
+    setIsCameraActive(true);
+    setCameraError(null);
+    setHasTorch(false);
+    
+    // Stop any existing streams first
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+      const track = stream.getVideoTracks()[0];
+      if (track) {
+        setTimeout(() => {
+          try {
+            const capabilities = track.getCapabilities() as any;
+            if (capabilities && 'torch' in capabilities) {
+              setHasTorch(true);
+              applyFlashMode(track, flashMode);
+            }
+          } catch (e) {
+            console.log("Torch check failed or unsupported in this device", e);
+          }
+        }, 300);
+      }
+    } catch (err: any) {
+      console.error("Camera access failed:", err);
+      setCameraError(err.message || "Failed to access default camera stream. Make sure camera block permissions are off.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  const applyFlashMode = async (track: MediaStreamTrack, mode: 'on' | 'off' | 'auto') => {
+    try {
+      const capabilities = track.getCapabilities() as any;
+      if (capabilities && 'torch' in capabilities) {
+        if (mode === 'on') {
+          await track.applyConstraints({
+            advanced: [{ torch: true } as any]
+          });
+        } else if (mode === 'off') {
+          await track.applyConstraints({
+            advanced: [{ torch: false } as any]
+          });
+        } else {
+          // 'auto' mode: keeps torch inactive initially till capture or default
+          await track.applyConstraints({
+            advanced: [{ torch: false } as any]
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Updating torch status failed", e);
+    }
+  };
+
+  const handleFlashToggle = async (mode: 'on' | 'off' | 'auto') => {
+    setFlashMode(mode);
+    if (streamRef.current) {
+      const track = streamRef.current.getVideoTracks()[0];
+      if (track) {
+        await applyFlashMode(track, mode);
+      }
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    
+    const canvas = document.createElement('canvas');
+    const videoWidth = videoRef.current.videoWidth || 640;
+    const videoHeight = videoRef.current.videoHeight || 480;
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      setImagePreview(dataUrl);
+      setResult(null);
+      setQueries([]);
+      setSaved(false);
+      stopCamera();
+    }
+  };
+
+  // Gracefully stop camera if component unmounts
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,7 +174,9 @@ export default function PartScanner({ vehicle }: { vehicle: Vehicle }) {
       if (data.error) throw new Error(data.error);
 
       setResult(data);
-      setQueries(data.youtubeSearchQueries || []);
+      const rawQueries = data.youtubeSearchQueries || data.YoutubeSearchQueries || data.youtube_search_queries || data.youtubeSearch || data.youtube || [];
+      const ytQueries = Array.isArray(rawQueries) ? rawQueries : [rawQueries].filter(Boolean);
+      setQueries(ytQueries.length > 0 ? ytQueries : [`${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''} ${data.PartName || 'part'} replacement`.trim()]);
     } catch (err: any) {
       setResult({ PartName: 'Error', PrimaryFunction: err.message || 'Something went wrong.', VisibleCondition: 'N/A', ReplacementDifficulty: 0, ImmediateNextSteps: 'Please try again.' });
     } finally {
@@ -109,19 +231,132 @@ ${result.ImmediateNextSteps || 'N/A'}
         <div className="space-y-6">
           {/* Image Upload Area */}
           <div>
-            {!imagePreview ? (
-              <label className="flex flex-col items-center justify-center w-full h-56 border-2 border-[#334155] border-dashed rounded-2xl cursor-pointer bg-[#1A202C] hover:bg-[#1E293B] transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <UploadCloud className="w-10 h-10 text-[#64748B] mb-3" />
-                  <p className="mb-2 text-sm text-[#E2E8F0]"><span className="font-bold">Click to upload</span> or drag and drop</p>
-                  <p className="text-xs text-[#64748B]">PNG, JPG or JPEG up to 10MB</p>
+            {isCameraActive ? (
+              <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-500/40 bg-black flex flex-col items-center justify-between min-h-[350px] sm:min-h-[400px]">
+                {/* HUD Top Bar */}
+                <div className="absolute top-0 inset-x-0 bg-black/75 backdrop-blur-md z-10 px-4 py-3 border-b border-[#334155]/60 flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping inline-block" /> Live Scanner Viewport
+                  </span>
+                  
+                  {/* Flash Controls */}
+                  <div className="flex items-center gap-1 bg-[#0B0F19] border border-[#334155]/85 p-0.5 rounded-lg">
+                    <button
+                      type="button"
+                      title="Flash Off"
+                      onClick={() => handleFlashToggle('off')}
+                      className={`p-1.5 rounded-md transition-all ${flashMode === 'off' ? 'bg-amber-500 text-black font-bold' : 'text-[#94A3B8] hover:text-white'}`}
+                    >
+                      <ZapOff className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Flash On"
+                      onClick={() => handleFlashToggle('on')}
+                      className={`p-1.5 rounded-md transition-all ${flashMode === 'on' ? 'bg-amber-500 text-black font-bold' : 'text-[#94A3B8] hover:text-white'}`}
+                    >
+                      <Zap className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Auto Flash Mode"
+                      onClick={() => handleFlashToggle('auto')}
+                      className={`py-0.5 px-2.5 rounded-md text-xs font-mono font-bold transition-all ${flashMode === 'auto' ? 'bg-amber-500 text-black' : 'text-[#94A3B8] hover:text-white'}`}
+                    >
+                      Auto
+                    </button>
+                  </div>
                 </div>
-                <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-              </label>
+
+                {/* Viewfinder Video Frame with Center Crosshair Grid */}
+                <div className="relative flex-1 w-full bg-[#07090E] flex items-center justify-center overflow-hidden min-h-[250px] sm:min-h-[280px]">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                  
+                  {/* Viewfinder Target Crosshairs */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-48 h-48 border border-dashed border-amber-500/20 rounded-2xl relative">
+                      {/* Four Corner brackets */}
+                      <span className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-500" />
+                      <span className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-500" />
+                      <span className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-500" />
+                      <span className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-500" />
+                    </div>
+                  </div>
+
+                  {cameraError && (
+                    <div className="absolute inset-x-4 bottom-4 bg-red-900/95 text-red-200 p-3.5 rounded-xl text-xs font-mono border border-red-800/50 backdrop-blur-md">
+                      <p className="font-bold uppercase tracking-wider mb-1">Camera Frame Failed</p>
+                      <p>{cameraError}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Capture / Controls Bar */}
+                <div className="w-full bg-black/85 px-6 py-4 border-t border-[#334155]/70 flex items-center justify-between gap-4">
+                  <button
+                    type="button"
+                    onClick={stopCamera}
+                    className="bg-[#1A202C] hover:bg-[#2D3748] border border-[#475569] text-xs font-bold text-white uppercase tracking-wider px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <X className="w-4 h-4" /> Cancel
+                  </button>
+
+                  {/* Concentric Capture Button */}
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    disabled={!!cameraError}
+                    className="w-14 h-14 bg-amber-500 hover:bg-amber-600 rounded-full border-4 border-white/60 hover:scale-105 active:scale-95 transition-all flex items-center justify-center shadow-lg hover:shadow-amber-500/25 disabled:opacity-30 disabled:pointer-events-none"
+                    title="Capture Snap"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-black/15 border border-black/20" />
+                  </button>
+
+                  <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#94A3B8]">
+                    {hasTorch ? '⚡ Flash OK' : '⚡ No Torch'}
+                  </div>
+                </div>
+              </div>
+            ) : !imagePreview ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Option 1: Live Interactive Camera Scanner */}
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  className="flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#1A202C] to-[#111520] hover:from-[#1E293B] hover:to-[#172033] border-2 border-dashed border-[#334155] hover:border-amber-500/70 rounded-2xl group transition-all duration-300 min-h-[190px] text-center cursor-pointer"
+                >
+                  <div className="w-12 h-12 bg-amber-500/10 group-hover:bg-amber-500/15 border border-amber-500/20 group-hover:border-amber-500/40 rounded-full flex items-center justify-center text-amber-500 mb-3 shadow-lg shadow-amber-500/5 group-hover:scale-110 transition-transform">
+                    <Video className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-[#E2E8F0] font-bold text-xs uppercase tracking-wider font-mono text-amber-500 group-hover:text-amber-400 transition-colors">Start Live Scanner</h4>
+                  <p className="text-[11px] text-[#94A3B8] max-w-[200px] mt-1.5 leading-relaxed">
+                    Capture directly from phone camera with flash mode control and level calibration.
+                  </p>
+                </button>
+
+                {/* Option 2: Image File Upload Drop Zone */}
+                <label className="flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#1A202C] to-[#111520] hover:from-[#1E293B] hover:to-[#172033] border-2 border-dashed border-[#334155] hover:border-amber-500/70 rounded-2xl group transition-all duration-300 min-h-[190px] text-center cursor-pointer">
+                  <div className="w-12 h-12 bg-[#1E293B] group-hover:bg-[#2D3748] border border-[#334155] rounded-full flex items-center justify-center text-[#94A3B8] mb-3 group-hover:scale-110 transition-transform">
+                    <UploadCloud className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-[#E2E8F0] font-bold text-xs uppercase tracking-wider font-mono">Upload Image File</h4>
+                  <p className="text-[11px] text-[#64748B] max-w-[200px] mt-1.5 leading-relaxed font-sans">
+                    Choose a pre-existing vehicle part photo from memory or photo gallery.
+                  </p>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                </label>
+              </div>
             ) : (
               <div className="relative w-full rounded-2xl overflow-hidden border border-[#334155] bg-black flex items-center justify-center h-64">
                 <img src={imagePreview} alt="Preview" className="max-h-full max-w-full object-contain" />
                 <button 
+                  type="button"
                   onClick={() => setImagePreview(null)}
                   className="absolute top-3 right-3 bg-[#0A0B0E]/80 text-[#E2E8F0] text-xs px-3 py-1.5 rounded-full backdrop-blur-md hover:bg-black transition-colors font-bold border border-[#334155]"
                 >
@@ -165,12 +400,12 @@ ${result.ImmediateNextSteps || 'N/A'}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-[#1A202C] p-4 rounded-xl border border-[#334155] flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="bg-[#1A202C] p-4 rounded-xl border border-[#334155] flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between md:col-span-2">
               <div>
                 <p className="text-xs text-[#94A3B8] uppercase tracking-wider font-bold mb-1">Part Name</p>
                 <p className="text-[#E2E8F0] font-semibold text-lg">{result.PartName || 'Unknown'}</p>
               </div>
-              {result.PartsSearchUrl && (
+              {result.PartsSearchUrl && (!result.RetailerOptions || result.RetailerOptions.length === 0) && (
                 <a 
                   href={result.PartsSearchUrl} 
                   target="_blank" 
@@ -181,6 +416,31 @@ ${result.ImmediateNextSteps || 'N/A'}
                 </a>
               )}
             </div>
+
+            {result.RetailerOptions && result.RetailerOptions.length > 0 && (
+              <div className="bg-[#1A202C] p-4 rounded-xl border border-[#334155] md:col-span-2">
+                <p className="text-xs text-[#94A3B8] uppercase tracking-wider font-bold mb-3 flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 inline-block" /> Compare Retailers
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {result.RetailerOptions.map((retailer: any, idx: number) => (
+                    <a
+                      key={idx}
+                      href={retailer.Url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group bg-[#0F1115] border border-[#334155] hover:border-[#F59E0B] p-3 rounded-lg flex flex-col transition-all text-left block"
+                    >
+                      <span className="text-[#94A3B8] text-xs font-bold uppercase tracking-wider mb-1">{retailer.Retailer}</span>
+                      <span className="text-[#E2E8F0] text-lg font-semibold mb-2">{retailer.EstimatedPrice}</span>
+                      <span className="text-[#64748B] text-xs flex items-center justify-between group-hover:text-white transition-colors">
+                        View Deals <ExternalLink className="w-3.5 h-3.5" />
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div className="bg-[#1A202C] p-4 rounded-xl border border-[#334155]">
               <p className="text-xs text-[#94A3B8] uppercase tracking-wider font-bold mb-1">Replacement Difficulty</p>

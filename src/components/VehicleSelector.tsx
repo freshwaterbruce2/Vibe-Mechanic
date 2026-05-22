@@ -3,6 +3,7 @@ import { Vehicle } from '../App';
 import { Car, AlertCircle, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getSavedVehicles, saveVehicle, SavedVehicle, deleteVehicle } from '../lib/vehicles';
+import AppCustomizer from './AppCustomizer';
 
 interface VehicleSelectorProps {
   vehicle: Vehicle;
@@ -204,6 +205,8 @@ export default function VehicleSelector({ vehicle, setVehicle, onNavigate }: Veh
         )}
 
       </div>
+      
+      <AppCustomizer />
     </motion.div>
   );
 }

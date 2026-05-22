@@ -4,7 +4,7 @@ export type DiagnosticHistory = {
   id: string;
   date: string;
   vehicle: Vehicle;
-  type: 'diagnostic' | 'vision';
+  type: 'diagnostic' | 'vision' | 'obd2';
   query: string;
   result: string;
   queries: string[];

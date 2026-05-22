@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Vehicle } from '../App';
 import { DiagnosticHistory, getHistory } from '../lib/history';
-import { History as HistoryIcon, CarFront, FileText, Calendar, Camera, Wrench, ChevronRight, Printer } from 'lucide-react';
+import { History as HistoryIcon, CarFront, FileText, Calendar, Camera, Wrench, ChevronRight, Printer, Gauge } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
@@ -80,11 +80,11 @@ export default function HistoryTab({ onSelectVehicle, onNavigate }: HistoryTabPr
                         >
                           <div className="flex items-start gap-4">
                             <div className="bg-[#0F1115] p-2 rounded-lg text-[#64748B] group-hover:text-[#FCD34D] transition-colors border border-[#334155]">
-                              {entry.type === 'diagnostic' ? <Wrench className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
+                              {entry.type === 'diagnostic' ? <Wrench className="w-5 h-5" /> : entry.type === 'obd2' ? <Gauge className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
                             </div>
                             <div>
                               <p className="text-[#E2E8F0] font-semibold text-sm">
-                                {entry.type === 'diagnostic' ? 'Guided Diagnostic' : 'Part Scanner'}
+                                {entry.type === 'diagnostic' ? 'Guided Diagnostic' : entry.type === 'obd2' ? 'OBD-II Diagnostician' : 'Part Scanner'}
                               </p>
                               <p className="text-[#94A3B8] text-sm line-clamp-1 max-w-[200px] sm:max-w-[400px] mt-0.5 italic">
                                 "{entry.query}"
@@ -141,7 +141,7 @@ export default function HistoryTab({ onSelectVehicle, onNavigate }: HistoryTabPr
                   </p>
                 </div>
                 <div className="bg-[#1E293B] px-3 py-1 rounded-full border border-[#334155] text-xs font-semibold text-[#E2E8F0] tracking-wider uppercase">
-                  {selectedEntry.type === 'diagnostic' ? 'Guided Diagnostic' : 'Vision Scan'}
+                  {selectedEntry.type === 'diagnostic' ? 'Guided Diagnostic' : selectedEntry.type === 'obd2' ? 'OBD-II Lookup' : 'Vision Scan'}
                 </div>
               </div>
 

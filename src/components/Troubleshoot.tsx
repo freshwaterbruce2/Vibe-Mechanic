@@ -81,7 +81,9 @@ export default function Troubleshoot({ vehicle }: { vehicle: Vehicle }) {
       if (data.error) throw new Error(data.error);
 
       setResult(data);
-      setQueries(data.youtubeSearchQueries || []);
+      const rawQueries = data.youtubeSearchQueries || data.YoutubeSearchQueries || data.youtube_search_queries || data.youtubeSearch || data.youtube || [];
+      const ytQueries = Array.isArray(rawQueries) ? rawQueries : [rawQueries].filter(Boolean);
+      setQueries(ytQueries.length > 0 ? ytQueries : [`${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''} ${symptoms || 'diagnose'}`.trim()]);
     } catch (err: any) {
       setResult({ DiagnosisInfo: `**Error:** ${err.message || 'Something went wrong.'}` });
     } finally {

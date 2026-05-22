@@ -2,12 +2,38 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Vibe Mechanics</title>
+    
+    <!-- PWA Core Setup -->
+    <link rel="manifest" href="/manifest.json" />
+    <link id="favicon-link" rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    
+    <!-- Meta styling for Native Feeling Android status indicators -->
+    <meta name="theme-color" content="#0B0F19" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
   </head>
-  <body>
+  <body class="bg-[#0B0F19] text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Register offline caching capabilities on mobile boot -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then((registration) => {
+              console.log('Vibe Mechanics PWA successfully licensed. Offline Scope:', registration.scope);
+            })
+            .catch((err) => {
+              console.error('PWA service-worker boot interrupted:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
 
