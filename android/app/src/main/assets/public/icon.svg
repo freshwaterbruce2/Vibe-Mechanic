@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Background Round-Rect mimicking Android Adaptive Icons -->
+  <rect width="512" height="512" rx="112" fill="#0B101D" />
+  
+  <!-- Outer Radial Accent Ring -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#2D3748" stroke-width="12" stroke-dasharray="20 10 opacity 0.5" />
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#475569" stroke-width="2" opacity="0.4" />
+
+  <!-- Amber Circuit Pattern behind tools -->
+  <path d="M 120,256 L 392,256 M 256,120 L 256,392 M 160,160 L 352,352 M 160,352 L 352,160" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" opacity="0.15" />
+  
+  <!-- Glowing Hexagonal nut base -->
+  <polygon points="256,150 347,203 347,309 256,362 165,309 165,203" fill="#111827" stroke="#F59E0B" stroke-width="8" stroke-linejoin="round" />
+  
+  <!-- Gear teeth profiles in Center -->
+  <g stroke="#F59E0B" stroke-width="14" stroke-linecap="round" fill="none">
+    <!-- Cog spikes outer circles -->
+    <circle cx="256" cy="256" r="45" stroke="#F59E0B" stroke-width="12" fill="#0B101D" />
+    <path d="M 256,190 L 256,170" />
+    <path d="M 256,322 L 256,342" />
+    <path d="M 190,256 L 170,256" />
+    <path d="M 322,256 L 342,256" />
+    <path d="M 209,209 L 195,195" />
+    <path d="M 303,303 L 317,317" />
+    <path d="M 209,303 L 195,317" />
+    <path d="M 303,209 L 317,295" opacity="0" /> <!-- structure balance -->
+    <path d="M 303,209 L 317,195" />
+  </g>
+
+  <!-- High contrast intersecting Mechanic tools -->
+  <g transform="translate(256,256) rotate(-45) translate(-256,-256)">
+    <!-- Heavy Duty open end Wrench -->
+    <!-- Wrench Body Handles -->
+    <path d="M 232,100 L 232,412 C 232,425 243,436 256,436 C 269,436 280,425 280,412 L 280,100 Z" fill="#E2E8F0" />
+    <rect x="244" y="140" width="24" height="232" rx="12" fill="#94A3B8" />
+    
+    <!-- Wrench Head Top -->
+    <path d="M 200,100 C 200,60 230,50 256,50 C 282,50 312,60 312,100 C 312,118 304,130 292,136 L 220,136 C 208,130 200,118 200,100 Z" fill="#F8FAFC" />
+    <!-- Wrench jaw cuts (open jaw tilt angle) -->
+    <polygon points="226,45 286,45 272,96 240,96" fill="#0B101D" />
+    <circle cx="256" cy="96" r="16" fill="#0B101D" />
+    
+    <!-- Premium Chrome wrench bottom bolt detailing -->
+    <circle cx="256" cy="412" r="14" fill="#64748B" />
+    <polygon points="256,404 263,408 263,416 256,420 249,416 249,408" fill="#F8FAFC" />
+  </g>
+
+  <!-- Glowing diagnostic Spark Indicator -->
+  <circle cx="256" cy="256" r="14" fill="#F59E0B" opacity="0.3" />
+  <circle cx="256" cy="256" r="6" fill="#F8FAFC" />
+</svg>

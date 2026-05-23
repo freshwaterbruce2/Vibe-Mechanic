@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { Wrench, Camera, CarFront, Gauge, Cog, BookOpen, History as HistoryIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import PartScanner from './components/PartScanner';
 import Troubleshoot from './components/Troubleshoot';
@@ -76,13 +77,24 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full flex flex-col bg-[radial-gradient(circle_at_top_right,_#111827,_#0A0B0E)] relative z-10">
-        <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 pb-24 lg:pb-6 flex-1">
-          {activeTab === 'vehicle' && <VehicleSelector vehicle={vehicle} setVehicle={setVehicle} onNavigate={() => setActiveTab('troubleshoot')} />}
-          {activeTab === 'troubleshoot' && <Troubleshoot vehicle={vehicle} />}
-          {activeTab === 'obd2' && <Obd2Lookup vehicle={vehicle} />}
-          {activeTab === 'specs' && <SpecsAndService vehicle={vehicle} />}
-          {activeTab === 'scanner' && <PartScanner vehicle={vehicle} />}
-          {activeTab === 'history' && <HistoryTab onSelectVehicle={setVehicle} onNavigate={() => setActiveTab('troubleshoot')} />}
+        <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 pb-24 lg:pb-6 flex-1 flex flex-col">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 12, filter: 'blur(2px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -12, filter: 'blur(2px)' }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full flex-1 flex flex-col"
+            >
+              {activeTab === 'vehicle' && <VehicleSelector vehicle={vehicle} setVehicle={setVehicle} onNavigate={() => setActiveTab('troubleshoot')} />}
+              {activeTab === 'troubleshoot' && <Troubleshoot vehicle={vehicle} />}
+              {activeTab === 'obd2' && <Obd2Lookup vehicle={vehicle} />}
+              {activeTab === 'specs' && <SpecsAndService vehicle={vehicle} />}
+              {activeTab === 'scanner' && <PartScanner vehicle={vehicle} />}
+              {activeTab === 'history' && <HistoryTab onSelectVehicle={setVehicle} onNavigate={() => setActiveTab('troubleshoot')} />}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
