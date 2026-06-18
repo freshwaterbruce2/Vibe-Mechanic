@@ -13,7 +13,89 @@ export interface IconOption {
   svgMarkup: React.ReactNode;
 }
 
-const ICON_OPTIONS: IconOption[] = [
+export const ICON_OPTIONS: IconOption[] = [
+  {
+    id: 'nano_banana',
+    name: 'Nano Banana Mech',
+    colorName: 'Cyber Banana & Neon Cyan',
+    primaryColor: '#EAB308',
+    secondaryColor: '#06B6D4',
+    themeClass: 'from-yellow-400 to-amber-500',
+    svgMarkup: (
+      <svg viewBox="0 0 100 100" className="w-full h-full">
+        <defs>
+          <linearGradient id="bananaYellow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FEF08A" />
+            <stop offset="60%" stopColor="#EAB308" />
+            <stop offset="100%" stopColor="#CA8A04" />
+          </linearGradient>
+          <linearGradient id="cyberSky" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#22D3EE" />
+            <stop offset="100%" stopColor="#0EA5E9" />
+          </linearGradient>
+          <linearGradient id="darkMetal" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#1E293B" />
+            <stop offset="100%" stopColor="#0F172A" />
+          </linearGradient>
+          <radialGradient id="neonGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#EAB308" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#EAB308" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        
+        {/* Futuristic dark tech base */}
+        <rect width="100" height="100" rx="22" fill="#090d16" />
+        <rect x="4" y="4" width="92" height="92" rx="18" fill="url(#darkMetal)" stroke="#1E293B" strokeWidth="1.5" />
+        <circle cx="50" cy="50" r="42" fill="url(#neonGlow)" />
+        
+        {/* Holographic tech grid/radial lines */}
+        <circle cx="50" cy="50" r="34" fill="none" stroke="#22D3EE" strokeWidth="0.5" strokeDasharray="5 3" opacity="0.35" />
+        <circle cx="50" cy="50" r="26" fill="none" stroke="#EAB308" strokeWidth="0.5" opacity="0.25" />
+        <line x1="15" y1="50" x2="85" y2="50" stroke="#22D3EE" strokeWidth="0.5" opacity="0.15" />
+        <line x1="50" y1="15" x2="50" y2="85" stroke="#22D3EE" strokeWidth="0.5" opacity="0.15" />
+
+        {/* The Cyber Nano Banana Body & Mechanics Block */}
+        <g transform="translate(50, 48) scale(1.05) translate(-50, -50)">
+          {/* Background wrench / mechanical wings crossing */}
+          <path d="M 28,28 L 72,72" stroke="url(#cyberSky)" strokeWidth="6.5" strokeLinecap="round" opacity="0.8" />
+          <path d="M 72,28 L 28,72" stroke="url(#cyberSky)" strokeWidth="6.5" strokeLinecap="round" opacity="0.8" />
+          
+          {/* Cyber Wrench Jaws details at the ends */}
+          <circle cx="28" cy="28" r="7" fill="#0F172A" stroke="url(#cyberSky)" strokeWidth="2.5" />
+          <polygon points="24,24 28,24 31,31 24,31" fill="#090d16" />
+          <circle cx="72" cy="72" r="7" fill="#0F172A" stroke="url(#cyberSky)" strokeWidth="2.5" />
+          <polygon points="68,68 76,68 76,76 68,76" fill="#090d16" />
+          
+          {/* Futuristic stylized Nano Banana */}
+          {/* The banana peel/casing curve */}
+          <path d="M 32,70 C 22,50 30,30 54,22 C 60,20 68,22 74,26 C 72,30 68,28 62,28 C 46,28 38,44 42,58 C 44,66 48,70 52,72 C 44,74 36,74 32,70 Z" fill="url(#bananaYellow)" stroke="#090D16" strokeWidth="2" strokeLinejoin="round" />
+          
+          {/* Segmented plated mechanical cuts on the peel */}
+          <path d="M 44,30 C 48,34 52,42 52,50" fill="none" stroke="#090D16" strokeWidth="1.5" />
+          <path d="M 36,46 C 42,48 48,54 50,62" fill="none" stroke="#090D16" strokeWidth="1.5" />
+          
+          {/* Glowing neon circuitry running along the banana body */}
+          <path d="M 34,58 C 30,48 38,36 48,30" fill="none" stroke="#22D3EE" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="48" cy="30" r="2.5" fill="#FFFFFF" stroke="#00EBFF" strokeWidth="1" />
+          <path d="M 40,64 C 44,58 52,52 64,52" fill="none" stroke="#22D3EE" strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="64" cy="52" r="1.5" fill="#FFFFFF" stroke="#00EBFF" strokeWidth="1" />
+          
+          {/* Engine Bolt / Gear joint at the base */}
+          <circle cx="56" cy="24" r="5" fill="#475569" stroke="#090D16" strokeWidth="1.5" />
+          <circle cx="56" cy="24" r="1.5" fill="#E2E8F0" />
+          
+          {/* Cybernetic stem end segment */}
+          <path d="M 54,22 L 58,16 L 63,18" fill="none" stroke="#090D16" strokeWidth="2" strokeLinecap="round" />
+        </g>
+        
+        {/* Tech decorative target scope circles */}
+        <path d="M 10,24 L 16,24" stroke="#22D3EE" strokeWidth="1.5" />
+        <path d="M 10,24 L 10,30" stroke="#22D3EE" strokeWidth="1.5" />
+        <path d="M 90,24 L 84,24" stroke="#22D3EE" strokeWidth="1.5" />
+        <path d="M 90,24 L 90,30" stroke="#22D3EE" strokeWidth="1.5" />
+      </svg>
+    )
+  },
   {
     id: 'obsidian_crest',
     name: 'Obsidian Stealth Crest',
@@ -213,8 +295,8 @@ const ICON_OPTIONS: IconOption[] = [
 
 export default function AppCustomizer() {
   const [useCustomIcon, setUseCustomIcon] = useState<boolean>(true);
-  const [selectedIcon, setSelectedIcon] = useState<string>('obsidian_crest');
-  const [accentColor, setAccentColor] = useState<string>('#F59E0B');
+  const [selectedIcon, setSelectedIcon] = useState<string>('nano_banana');
+  const [accentColor, setAccentColor] = useState<string>('#EAB308');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Load preferences from localStorage on mount
@@ -223,7 +305,12 @@ export default function AppCustomizer() {
     const savedUseCustom = localStorage.getItem('vibe_mechanic_use_custom_icon');
     const savedAccent = localStorage.getItem('vibe_mechanic_accent');
 
-    if (savedIconId) setSelectedIcon(savedIconId);
+    if (savedIconId) {
+      setSelectedIcon(savedIconId);
+    } else {
+      // Setup default accent on first mount if none is stored
+      document.documentElement.style.setProperty('--theme-accent', '#EAB308');
+    }
     if (savedUseCustom) setUseCustomIcon(savedUseCustom === 'true');
     if (savedAccent) {
       setAccentColor(savedAccent);
@@ -253,7 +340,7 @@ export default function AppCustomizer() {
         if (ctx) {
           // Determine custom theme matching styling colors
           let bg = '#0C0E14';
-          let primary = '#F59E0B';
+          let primary = '#EAB308';
           if (iconId === 'cyber_cruiser') {
             bg = '#03000A';
             primary = '#EC4899';
@@ -263,6 +350,9 @@ export default function AppCustomizer() {
           } else if (iconId === 'retro_spark') {
             bg = '#0C0A21';
             primary = '#D97706';
+          } else if (iconId === 'nano_banana') {
+            bg = '#090d16';
+            primary = '#EAB308';
           }
           
           ctx.fillStyle = bg;
@@ -281,6 +371,8 @@ export default function AppCustomizer() {
         link.href = "/icon.svg"; // standard default fallback
       }
     }
+
+    window.dispatchEvent(new Event('vibe_mechanic_settings_updated'));
 
     setToastMsg("Preferences successfully configured!");
     setTimeout(() => setToastMsg(null), 3000);

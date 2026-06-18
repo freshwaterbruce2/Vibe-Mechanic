@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Wrench, Camera, CarFront, Gauge, Cog, BookOpen, History as HistoryIcon, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
@@ -14,6 +14,7 @@ import HistoryTab from './components/HistoryTab';
 import Obd2Lookup from './components/Obd2Lookup';
 import SpecsAndService from './components/SpecsAndService';
 import SoundDiagnose from './components/SoundDiagnose';
+import { ICON_OPTIONS } from './components/AppCustomizer';
 
 export type Vehicle = {
   year: string;
@@ -25,6 +26,23 @@ export type Vehicle = {
 export default function App() {
   const [vehicle, setVehicle] = useState<Vehicle>({ year: '', make: '', model: '', engine: '' });
   const [activeTab, setActiveTab] = useState<'troubleshoot' | 'sound' | 'scanner' | 'vehicle' | 'history' | 'obd2' | 'specs'>('vehicle');
+  const [currentIconId, setCurrentIconId] = useState<string>('nano_banana');
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      const savedIconId = localStorage.getItem('vibe_mechanic_icon_id') || 'nano_banana';
+      setCurrentIconId(savedIconId);
+    };
+
+    // Initialize
+    handleUpdate();
+
+    // Listen for custom settings dispatch
+    window.addEventListener('vibe_mechanic_settings_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('vibe_mechanic_settings_updated', handleUpdate);
+    };
+  }, []);
 
   const navItems = [
     { id: 'vehicle', label: 'My Vehicle', icon: CarFront },
@@ -61,10 +79,10 @@ export default function App() {
       {/* Header */}
       <header className="h-16 bg-[#0F1115]/90 backdrop-blur-md border-b border-[#1E293B] sticky top-0 z-10 px-4 sm:px-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded flex items-center justify-center relative shadow-lg transition-all" style={{ backgroundColor: 'var(--theme-accent, #F59E0B)' }}>
-            <Wrench className="w-5 h-5 text-black" />
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center relative shadow-lg overflow-hidden bg-black border border-[#1E293B]">
+            {ICON_OPTIONS.find(i => i.id === currentIconId)?.svgMarkup || ICON_OPTIONS[0].svgMarkup}
           </div>
-          <h1 className="text-lg font-bold tracking-tight uppercase">Vibe <span style={{ color: 'var(--theme-accent, #F59E0B)' }}>Mechanics</span></h1>
+          <h1 className="text-lg font-bold tracking-tight uppercase">Vibe <span style={{ color: 'var(--theme-accent, #EAB308)' }}>Mechanics</span></h1>
         </div>
         {(vehicle.year || vehicle.make || vehicle.model) && (
           <div className="hidden sm:flex bg-[#1E293B]/80 px-4 py-1.5 rounded-full border border-[#334155] items-center gap-3">
