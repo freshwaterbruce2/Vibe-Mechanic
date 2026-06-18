@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
+import FuseBoxFinder from './FuseBoxFinder';
 
 interface SpecsAndServiceProps {
   vehicle: Vehicle;
@@ -149,7 +150,7 @@ const UNDER_HOOD_PARTS = [
 ];
 
 export default function SpecsAndService({ vehicle }: SpecsAndServiceProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'specs' | 'maintenance' | 'visual'>('specs');
+  const [activeSubTab, setActiveSubTab] = useState<'specs' | 'maintenance' | 'visual' | 'fuse_box'>('specs');
   
   // Specifications states
   const [specLoading, setSpecLoading] = useState(false);
@@ -279,6 +280,16 @@ export default function SpecsAndService({ vehicle }: SpecsAndServiceProps) {
           }`}
         >
           <Eye className="w-4 h-4 shrink-0" /> Visual Hood & Dash
+        </button>
+        <button
+          onClick={() => setActiveSubTab('fuse_box')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-1 sm:px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all ${
+            activeSubTab === 'fuse_box'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/15'
+              : 'text-[#94A3B8] hover:bg-[#1E293B] hover:text-white'
+          }`}
+        >
+          <Zap className="w-4 h-4 shrink-0" /> Fuse Finder
         </button>
       </div>
 
@@ -794,6 +805,18 @@ export default function SpecsAndService({ vehicle }: SpecsAndServiceProps) {
                 </div>
               )}
             </div>
+          </motion.div>
+        )}
+
+        {/* SUB-TAB 4: DYNAMIC FUSE BOX FINDER */}
+        {activeSubTab === 'fuse_box' && (
+          <motion.div
+            key="fuse_box"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <FuseBoxFinder vehicle={vehicle} />
           </motion.div>
         )}
       </AnimatePresence>

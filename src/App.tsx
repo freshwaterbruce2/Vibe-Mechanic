@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Wrench, Camera, CarFront, Gauge, Cog, BookOpen, History as HistoryIcon } from 'lucide-react';
+import { Wrench, Camera, CarFront, Gauge, Cog, BookOpen, History as HistoryIcon, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import PartScanner from './components/PartScanner';
@@ -13,6 +13,7 @@ import VehicleSelector from './components/VehicleSelector';
 import HistoryTab from './components/HistoryTab';
 import Obd2Lookup from './components/Obd2Lookup';
 import SpecsAndService from './components/SpecsAndService';
+import SoundDiagnose from './components/SoundDiagnose';
 
 export type Vehicle = {
   year: string;
@@ -23,11 +24,12 @@ export type Vehicle = {
 
 export default function App() {
   const [vehicle, setVehicle] = useState<Vehicle>({ year: '', make: '', model: '', engine: '' });
-  const [activeTab, setActiveTab] = useState<'troubleshoot' | 'scanner' | 'vehicle' | 'history' | 'obd2' | 'specs'>('vehicle');
+  const [activeTab, setActiveTab] = useState<'troubleshoot' | 'sound' | 'scanner' | 'vehicle' | 'history' | 'obd2' | 'specs'>('vehicle');
 
   const navItems = [
     { id: 'vehicle', label: 'My Vehicle', icon: CarFront },
     { id: 'troubleshoot', label: 'Diagnose', icon: Wrench },
+    { id: 'sound', label: 'Sound', icon: Volume2 },
     { id: 'obd2', label: 'OBD-II Lookup', icon: Gauge },
     { id: 'specs', label: 'Specs & Guides', icon: BookOpen },
     { id: 'scanner', label: 'Part Scanner', icon: Camera },
@@ -89,6 +91,7 @@ export default function App() {
             >
               {activeTab === 'vehicle' && <VehicleSelector vehicle={vehicle} setVehicle={setVehicle} onNavigate={() => setActiveTab('troubleshoot')} />}
               {activeTab === 'troubleshoot' && <Troubleshoot vehicle={vehicle} />}
+              {activeTab === 'sound' && <SoundDiagnose vehicle={vehicle} />}
               {activeTab === 'obd2' && <Obd2Lookup vehicle={vehicle} />}
               {activeTab === 'specs' && <SpecsAndService vehicle={vehicle} />}
               {activeTab === 'scanner' && <PartScanner vehicle={vehicle} />}

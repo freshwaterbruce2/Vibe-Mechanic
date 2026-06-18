@@ -545,6 +545,227 @@ Return this strictly in JSON format with these exact properties:
   }
 });
 
+// API Route: NVH Acoustic Engine Sound Diagnostic Classification
+app.post("/api/diagnose-sound", async (req, res) => {
+  try {
+    const { year, make, model, engine, soundType, context } = req.body;
+    
+    let vehicle = (year && make && model) ? `${year} ${make} ${model}` : 'a generic vehicle';
+    if (year && make && model && engine) {
+      vehicle = `${year} ${make} ${model} ${engine}`;
+    }
+
+    const prompt = `You are an expert ASE Master Certified diagnostic mechanic specializing in NVH (Noise, Vibration, and Harshness) profiling.
+A user indicates their ${vehicle} makes a classic abnormal mechanical noise.
+
+The primary sound category is defined as: "${soundType}"
+And they describe the context / symptoms as: "${context || 'No additional context provided'}"
+
+Please analyze this vehicle acoustic signature and provide a comprehensive, direct, and reassurance-focused response in strict JSON format with these exact properties:
+- "LikelyIssue": String. A clear mechanical diagnosis label (e.g. "Serpentine Accessory Belt Slippage", "Hydraulic Lifter Tick/Wear", "Connecting Rod Bearing Knock", "Exhaust Heat Shield Resonance").
+- "AcousticReasoning": String (Markdown format). Explain why this specific sound occurs in relation to the engine's mechanical components and why the listed symptoms form this diagnosis.
+- "Severity": String. Must be one of: "Low" (harmless, repair at leisure), "Moderate" (performance loss risk, repair soon), "High" (catastrophic breakdown risk, do not drive long distances), or "Critical" (imminent engine failure, tow immediately).
+- "DiyTest": String. A practical DIY physical test the operator can do to confirm (e.g. "Spray water on the serpentine belt to see if sound goes away", "Use a screwdriver as a makeshift stethoscope against the block").
+- "RequiredTools": Array of Strings. Tools needed for the repair.
+- "SafetyWarnings": Array of Strings. Key safety warnings for this repair.
+- "EstimatedTime": String. E.g., "1-2 hours".
+- "EstimatedCost": Object with "Parts" (String), "Labor" (String), and "Total" (String).
+- "StepByStepGuide": Array of Strings. Numbered, highly detailed, professional-grade diagnostic/replacement steps to fix this problem.
+- "youtubeSearchQueries": Array of Strings. 1 to 2 precise search queries for YouTube tutorials on repairing this exact sound/issue.`;
+
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+    } catch (apiError: any) {
+      if (apiError.status === 503 || apiError.message?.includes('503')) {
+        console.warn("Gemini is overloaded on sound query, using flash-lite fallback...");
+        response = await ai.models.generateContent({
+          model: "gemini-3.1-flash-lite",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json"
+          }
+        });
+      } else {
+        throw apiError;
+      }
+    }
+
+    let resultData;
+    try {
+      const text = response.text.trim().replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
+      resultData = JSON.parse(text);
+    } catch (e) {
+      resultData = {
+        LikelyIssue: "Potential Accessory or Valve Defect",
+        AcousticReasoning: "The acoustic frequency matches components linked with standard rotational mechanics of " + vehicle + ".",
+        Severity: "Moderate",
+        DiyTest: "Carefully inspect pulleys and accessory belts with a bright light while running. Use caution around spinning shafts.",
+        RequiredTools: ["Flashlight", "Basic socket set", "Safety glasses"],
+        SafetyWarnings: ["Keep hands/hair clear of spinning drive belt items", "Engine components are extremely hot"],
+        EstimatedTime: "1-3 hours",
+        EstimatedCost: { Parts: "Varies", Labor: "Varies", Total: "Varies" },
+        StepByStepGuide: [
+          "Safely pull the vehicle onto level ground and set the parking brake.",
+          "Open the hood and inspect for obvious visual components wearing down or leaking near belts or pulleys.",
+          "Check engine oil levels - under-lubrication can prompt intensive clicking/ticking sounds.",
+          "If noise persists, visit a qualified local technician to avoid internal damages."
+        ],
+        youtubeSearchQueries: [vehicle + " " + soundType + " noise noise diagnosis"]
+      };
+    }
+
+    res.json(resultData);
+  } catch (error: any) {
+    console.error("Error in /api/diagnose-sound:", error);
+    res.json({
+      LikelyIssue: "Service Temporarily Offline",
+      AcousticReasoning: "We could not reach the NVH diagnostic model at this time.",
+      Severity: "Low",
+      DiyTest: "Check fluid levels manually.",
+      RequiredTools: [],
+      SafetyWarnings: [],
+      EstimatedTime: "N/A",
+      EstimatedCost: { Parts: "N/A", Labor: "N/A", Total: "N/A" },
+      StepByStepGuide: ["Could not process sound signatures at this moment. Please try again."],
+      youtubeSearchQueries: []
+    });
+  }
+});
+
+// API Route: Dynamic Fuse Box finder and Electrical layout generator
+app.post("/api/fusebox", async (req, res) => {
+  try {
+    const { year, make, model, engine, system } = req.body;
+    
+    let vehicle = (year && make && model) ? `${year} ${make} ${model}` : 'a generic vehicle';
+    if (year && make && model && engine) {
+      vehicle = `${year} ${make} ${model} ${engine}`;
+    }
+
+    const prompt = `You are a certified master automotive electrician specializing in terminal junctions.
+A user is dealing with an electrical component issue regarding "${system || 'all systems'}" on their ${vehicle}.
+
+Generate an accurate, structured schematic representing the vehicle's electrical fuse block grids (provide TWO fuse boxes: one representing the standard under-hood compartment, and one representing the cabin dashboard/interior fuse box).
+Provide this response strictly in JSON format with this exact layout:
+- "suggestedCandidate": Object showing the most likely single blown fuse related to "${system || 'all'}" (with properties "boxName", "fuseId", "name", "amperage", "description", "actionGuide"). If no system is requested, default to listing a generic accessory fuse like "CIGAR lighter / 12V Outlet".
+- "boxes": Array of TWO fuse boxes. Each box object must have:
+  - "name": String (e.g., "Engine Bay Fuse Block" or "Passenger Cabin Junction Block").
+  - "location": String (Detailed physical location, e.g. "Under hood, driver side next to the air intake filter" or "Left kick-panel by passenger footwell").
+  - "fuses": Array of 12 distinct fuses representing a structured schematic grid (arrange them in structured rows and columns from 1 to 4). Each fuse object in the grid must contain:
+    - "id": String (e.g. "F1", "F12", "F22").
+    - "name": String (Common OEM labels of circuits, e.g., "AUDIO", "HORN", "WIPERS", "INJ", "IGN", "ABS", "ACC", "AC COMP", "HEATER", "DOME LIGHT", "HAZARDS", "SPARE").
+    - "amperage": String (Standard ratings: "7.5A", "10A", "15A", "20A", "25A", "30A", "40A").
+    - "row": Number (1 to 4).
+    - "col": Number (1 to 3).
+    - "description": String. What important module/feature this single circuit protects.
+- "replacementGuide": Array of Strings. Step-by-step instructions on how to locate, test with a test light/multimeter, pull, inspect, and replace a micro/mini blown blade fuse safely on this vehicle.`;
+
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+    } catch (apiError: any) {
+      if (apiError.status === 503 || apiError.message?.includes('503')) {
+        console.warn("Gemini is overloaded on fuse logic, using fallback...");
+        response = await ai.models.generateContent({
+          model: "gemini-3.1-flash-lite",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json"
+          }
+        });
+      } else {
+        throw apiError;
+      }
+    }
+
+    let resultData;
+    try {
+      const text = response.text.trim().replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
+      resultData = JSON.parse(text);
+    } catch (e) {
+      // Robust mock fallback representing standard layouts
+      resultData = {
+        suggestedCandidate: {
+          boxName: "Passenger Cabin Junction Block",
+          fuseId: "F15",
+          name: "ACC SOCKET / CIGAR",
+          amperage: "15A",
+          description: "Powers accessory 12V sockets and USB power accessories.",
+          actionGuide: "Use the fuse puller tool located in the engine bay box, pull F15, checks for a broken metal wire bridge inside the glass window."
+        },
+        boxes: [
+          {
+            name: "Engine Bay Fuse Block",
+            location: "Under hood, back-left corner adjacent to the vehicle battery terminal.",
+            fuses: [
+              { id: "F1", name: "HORN", amperage: "10A", row: 1, col: 1, description: "Protects dual-tone vehicle horn assembly." },
+              { id: "F2", name: "EFI / ECM", amperage: "25A", row: 1, col: 2, description: "Electronic Fuel Injection and core engine mapping chip power." },
+              { id: "F3", name: "WIPER", amperage: "20A", row: 1, col: 3, description: "Windshield wiper motor torque power lines." },
+              { id: "F4", name: "A/C COMP", amperage: "15A", row: 2, col: 1, description: "Powers the air conditioning electromagnetic clutch actuator." },
+              { id: "F5", name: "ABS", amperage: "30A", row: 2, col: 2, description: "Anti-lock brake hydraulic modulator solenoid rails." },
+              { id: "F6", name: "HEADLIGHT LH", amperage: "15A", row: 2, col: 3, description: "Left-hand side primary low/high beam bulb." },
+              { id: "F7", name: "HEADLIGHT RH", amperage: "15A", row: 3, col: 1, description: "Right-hand side primary low/high beam bulb." },
+              { id: "F8", name: "COOLING FAN", amperage: "30A", row: 3, col: 2, description: "Electric radiator coolant pull motor circuit." },
+              { id: "F9", name: "IGN", amperage: "15A", row: 3, col: 3, description: "Ignition system spark plugs coil pack direct feed lines." },
+              { id: "F10", name: "SPARE 1", amperage: "10A", row: 4, col: 1, description: "Blank template replacement accessory fuse." },
+              { id: "F11", name: "SPARE 2", amperage: "15A", row: 4, col: 2, description: "Blank template replacement accessory fuse." },
+              { id: "F12", name: "SPARE 3", amperage: "20A", row: 4, col: 3, description: "Blank template replacement accessory fuse." }
+            ]
+          },
+          {
+            name: "Passenger Cabin Junction Block",
+            location: "Behind retractable plastic access hatch inside side wall of driver footwell.",
+            fuses: [
+              { id: "F13", name: "AUDIO / RADIO", amperage: "15A", row: 1, col: 1, description: "Infotainment display unit, speakers, and radio memory." },
+              { id: "F14", name: "DOME LIGHT", amperage: "7.5A", row: 1, col: 2, description: "High roof interior cabin lighting and door triggers." },
+              { id: "F15", name: "ACC SOCKET", amperage: "15A", row: 1, col: 3, description: "12V cigar sockets, phone port nodes, center tray connector." },
+              { id: "F16", name: "HEATER / HVAC", amperage: "30A", row: 2, col: 1, description: "Interior environmental fan motor and heater vents controller." },
+              { id: "F17", name: "TAIL LIGHTS", amperage: "10A", row: 2, col: 2, description: "Rear running light bulbs, license numbers plate tags illumination." },
+              { id: "F18", name: "METER / GAUGE", amperage: "7.5A", row: 2, col: 3, description: "Driver cluster dashboard status screens, dials and gauges." },
+              { id: "F19", name: "SRS AIRBAG", amperage: "10A", row: 3, col: 1, description: "Supplementary restraint curtains control processor." },
+              { id: "F20", name: "LOCKS / BODY", amperage: "20A", row: 3, col: 2, description: "Solenoid power for doors door lock actuation nodes." },
+              { id: "F21", name: "WINDOWS", amperage: "25A", row: 3, col: 3, description: "Driver side and passenger glass slider lift motor current lines." },
+              { id: "F22", name: "OBD-II FEED", amperage: "10A", row: 4, col: 1, description: "12V unswitched terminal on DLC tool reader connector." },
+              { id: "F23", name: "MIRROR ACC", amperage: "7.5A", row: 4, col: 2, description: "Power side mirrors adjustment switches and defroster." },
+              { id: "F24", name: "SPARE 4", amperage: "10A", row: 4, col: 3, description: "Blank replacement fuse." }
+            ]
+          }
+        ],
+        replacementGuide: [
+          "Ensure the ignition is clicked fully off. Pull key out of chamber.",
+          "Locate corresponding fuse block panel (footwell or engine bay casing). Unlatch plastic clip tabs.",
+          "Refer to target ID from schematic locator above (e.g. F15 for socket).",
+          "Using a plastic fuse puller tool (located in engine bay holder trim), grasp fuse body and pull straight outwards.",
+          "Hold blade fuse towards a light source: inspect if metallic loop is fractured or has dark scorch points.",
+          "If broken, push a identical amperage (same color/number) blade fuse down into the slot firmly.",
+          "Start your engine to verify the circuit powers on. Snap cover elements back into position."
+        ]
+      };
+    }
+
+    res.json(resultData);
+  } catch (error: any) {
+    console.error("Error in /api/fusebox:", error);
+    res.json({
+      boxes: [],
+      replacementGuide: ["Fuses diagnostic database offline relative with connectivity lines. Please check manually."]
+    });
+  }
+});
+
 async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

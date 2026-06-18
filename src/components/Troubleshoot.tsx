@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
 import { Vehicle } from '../App';
-import { Wrench, Loader2, PlayCircle, AlertTriangle, ExternalLink, Save, Check, Printer, Mic, Square, ShoppingCart } from 'lucide-react';
+import { Wrench, Loader2, PlayCircle, AlertTriangle, ExternalLink, Save, Check, Printer, Mic, Square, ShoppingCart, Volume2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import { saveHistory } from '../lib/history';
+import SoundDiagnose from './SoundDiagnose';
 
 export default function Troubleshoot({ vehicle }: { vehicle: Vehicle }) {
   const [symptoms, setSymptoms] = useState('');
@@ -120,13 +121,43 @@ ${Array.isArray(result.StepByStepGuide) && result.StepByStepGuide.length > 0 ? `
     }
   };
 
+  const [activeMode, setActiveMode] = useState<'guided' | 'sound'>('guided');
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto space-y-6"
-    >
-      <div className="print:hidden bg-[#151921] p-6 rounded-2xl shadow-xl border border-[#1E293B]">
+    <div className="space-y-6">
+      {/* Switcher Tab bar */}
+      <div className="flex border-b border-[#1E293B] pb-2 gap-4">
+        <button
+          onClick={() => setActiveMode('guided')}
+          className={`pb-2.5 px-1 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${
+            activeMode === 'guided' 
+              ? 'text-[#F59E0B] border-[#F59E0B]' 
+              : 'text-[#94A3B8] border-transparent hover:text-white'
+          }`}
+        >
+          💬 Guided Symptoms
+        </button>
+        <button
+          onClick={() => setActiveMode('sound')}
+          className={`pb-2.5 px-1 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${
+            activeMode === 'sound' 
+              ? 'text-[#F59E0B] border-[#F59E0B]' 
+              : 'text-[#94A3B8] border-transparent hover:text-white'
+          }`}
+        >
+          🔊 Listen & Diagnose
+        </button>
+      </div>
+
+      {activeMode === 'sound' ? (
+        <SoundDiagnose vehicle={vehicle} />
+      ) : (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl mx-auto space-y-6"
+        >
+          <div className="print:hidden bg-[#151921] p-6 rounded-2xl shadow-xl border border-[#1E293B]">
         <div className="flex items-center gap-3 mb-6 border-b border-[#334155] pb-4">
           <div className="bg-[#1E293B] p-2.5 rounded-full text-[#94A3B8]">
             <Wrench className="w-6 h-6" />
@@ -311,6 +342,8 @@ ${Array.isArray(result.StepByStepGuide) && result.StepByStepGuide.length > 0 ? `
           </div>
         </motion.div>
       )}
-    </motion.div>
+        </motion.div>
+      )}
+    </div>
   );
 }
