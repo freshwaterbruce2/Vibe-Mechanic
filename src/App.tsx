@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Wrench, Camera, CarFront, Gauge, Cog, BookOpen, History as HistoryIcon, Volume2 } from 'lucide-react';
+import { Wrench, Camera, CarFront, Gauge, Cog, BookOpen, History as HistoryIcon, Volume2, Droplet } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import PartScanner from './components/PartScanner';
@@ -14,6 +14,7 @@ import HistoryTab from './components/HistoryTab';
 import Obd2Lookup from './components/Obd2Lookup';
 import SpecsAndService from './components/SpecsAndService';
 import SoundDiagnose from './components/SoundDiagnose';
+import FluidTracker from './components/FluidTracker';
 import { ICON_OPTIONS } from './components/AppCustomizer';
 
 export type Vehicle = {
@@ -25,7 +26,7 @@ export type Vehicle = {
 
 export default function App() {
   const [vehicle, setVehicle] = useState<Vehicle>({ year: '', make: '', model: '', engine: '' });
-  const [activeTab, setActiveTab] = useState<'troubleshoot' | 'sound' | 'scanner' | 'vehicle' | 'history' | 'obd2' | 'specs'>('vehicle');
+  const [activeTab, setActiveTab] = useState<'troubleshoot' | 'sound' | 'scanner' | 'vehicle' | 'history' | 'obd2' | 'specs' | 'fluids'>('vehicle');
   const [currentIconId, setCurrentIconId] = useState<string>('nano_banana');
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function App() {
   const navItems = [
     { id: 'vehicle', label: 'My Vehicle', icon: CarFront },
     { id: 'troubleshoot', label: 'Diagnose', icon: Wrench },
+    { id: 'fluids', label: 'Fluids', icon: Droplet },
     { id: 'sound', label: 'Sound', icon: Volume2 },
     { id: 'obd2', label: 'OBD-II Lookup', icon: Gauge },
     { id: 'specs', label: 'Specs & Guides', icon: BookOpen },
@@ -90,7 +92,7 @@ export default function App() {
             <span className="text-sm text-white font-mono">
               {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.engine || ''}
             </span>
-            <CarFront className="w-4 h-4 text-[#F59E0B]" />
+            <CarFront className="w-4 h-4 text-[#EAB308]" />
           </div>
         )}
       </header>
@@ -109,6 +111,7 @@ export default function App() {
             >
               {activeTab === 'vehicle' && <VehicleSelector vehicle={vehicle} setVehicle={setVehicle} onNavigate={() => setActiveTab('troubleshoot')} />}
               {activeTab === 'troubleshoot' && <Troubleshoot vehicle={vehicle} />}
+              {activeTab === 'fluids' && <FluidTracker vehicle={vehicle} />}
               {activeTab === 'sound' && <SoundDiagnose vehicle={vehicle} />}
               {activeTab === 'obd2' && <Obd2Lookup vehicle={vehicle} />}
               {activeTab === 'specs' && <SpecsAndService vehicle={vehicle} />}
@@ -120,8 +123,8 @@ export default function App() {
       </main>
 
       {/* Bottom Navigation for Mobile / Side Nav for Desktop via Flex */}
-      <nav className="print:hidden fixed bottom-0 left-0 right-0 bg-[#0F1115]/95 backdrop-blur-md border-t border-[#1E293B] lg:sticky lg:bottom-auto lg:top-0 lg:rounded-t-none pb-safe z-10">
-        <div className="max-w-4xl mx-auto flex justify-around p-1.5 lg:p-0">
+      <nav className="print:hidden fixed bottom-0 left-0 right-0 bg-[#0F1115]/95 backdrop-blur-md border-t border-[#1E293B] lg:sticky lg:bottom-auto lg:top-0 lg:rounded-t-none pb-safe z-10 overflow-x-auto scrollbar-none">
+        <div className="max-w-4xl mx-auto flex justify-start lg:justify-around p-1.5 lg:p-0 min-w-max lg:min-w-0">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -130,14 +133,14 @@ export default function App() {
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
                 className={cn(
-                  "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all duration-200 ease-out w-full lg:w-auto lg:px-6 lg:py-4 lg:flex-row lg:gap-3",
+                  "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all duration-200 ease-out shrink-0 px-4 sm:px-5 lg:px-6 lg:py-4 lg:flex-row lg:gap-3",
                   isActive
-                    ? "text-[#F59E0B] lg:bg-transparent lg:border-b-2 lg:border-[#F59E0B] lg:rounded-none"
+                    ? "text-[#EAB308] lg:bg-transparent lg:border-b-2 lg:border-[#EAB308] lg:rounded-none"
                     : "text-[#94A3B8] hover:bg-[#1E293B]/50 hover:text-white"
                 )}
               >
-                <Icon className={cn("w-5.5 h-5.5 mb-1 lg:mb-0", isActive ? "stroke-[#F59E0B]" : "")} />
-                <span className={cn("text-[10px] sm:text-xs font-semibold uppercase tracking-wider lg:text-sm", isActive ? "text-[#F59E0B]" : "")}>
+                <Icon className={cn("w-5 h-5 mb-1 lg:mb-0", isActive ? "stroke-[#EAB308]" : "")} />
+                <span className={cn("text-[9px] sm:text-xs font-semibold uppercase tracking-wider lg:text-sm", isActive ? "text-[#EAB308]" : "")}>
                   {item.label}
                 </span>
               </button>
